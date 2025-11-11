@@ -1,6 +1,10 @@
 # Gooner Store Mobile
 Aplikasi mobile simpel terinspirasi dari tim sepak bola Arsenal FC yang dibuat untuk Tugas Individu Mata Kuliah Pemrograman Berbasis Platform (PBP) 2025/2026 di Fakultas Ilmu Komputer Universitas Indonesia.
 
+## Daftar Isi
+- [Tugas 7](#tugas-7)
+- [Tugas 8](#tugas-8)
+
 ## Tugas 7
 
 ### 1) Apa itu widget tree dan hubungan parent-child?
@@ -59,3 +63,73 @@ Contoh di proyek:
 ### 6) Hot reload vs hot restart
 - Hot reload: Menyuntikkan perubahan kode ke VM dan rebuild widget tree tanpa menghapus state. Cepat untuk iterasi UI/logic ringan.
 - Hot restart: Me-restart aplikasi dari awal (state hilang), menjalankan ulang main(). Dipakai kalau perubahan tidak terdeteksi hot reload atau ingin state bersih.
+
+## Tugas 8
+
+### 1) Perbedaan `Navigator.push()` dan `Navigator.pushReplacement()`
+
+**Navigator.push()**
+- Menambahkan route baru ke stack navigasi
+- Halaman sebelumnya tetap ada di memori
+- User bisa kembali ke halaman sebelumnya dengan tombol back
+- Contoh: Navigasi dari Home ke Form Add Product
+
+**Navigator.pushReplacement()**
+- Mengganti route saat ini dengan route baru
+- Halaman sebelumnya dihapus dari stack
+- User tidak bisa kembali ke halaman sebelumnya
+- Contoh: Navigasi dari drawer menu ke halaman utama
+
+**Penggunaan di Gooner Store:**
+- `Navigator.push()`: Digunakan saat membuka form Add Product dari home atau drawer, karena user mungkin ingin kembali
+- `Navigator.pushReplacement()`: Digunakan di drawer saat pindah ke Home, agar tidak menumpuk halaman yang sama
+
+### 2) Pemanfaatan Hierarchy Widget untuk Konsistensi
+
+**Scaffold**
+- Digunakan sebagai struktur dasar di semua halaman ([menu.dart](lib/screens/menu.dart), [productlist_form.dart](lib/screens/productlist_form.dart))
+- Menyediakan kerangka konsisten dengan AppBar, Drawer, dan Body
+
+**AppBar**
+- Tampil di semua halaman dengan warna dan style yang sama (merah Arsenal)
+- Title konsisten menggunakan font bold dan warna putih
+
+**Drawer (LeftDrawer)**
+- Widget terpisah di [left_drawer.dart](lib/widgets/left_drawer.dart)
+- Dipakai di semua halaman utama untuk navigasi yang konsisten
+- Header dan menu items sama di seluruh aplikasi
+
+Dengan pendekatan ini, user mendapat pengalaman navigasi yang familiar di setiap halaman.
+
+### 3) Kelebihan Layout Widget untuk Form
+
+**Padding**
+- Memberikan jarak antar elemen form agar tidak sumpek
+- Di [productlist_form.dart](lib/screens/productlist_form.dart): `Padding(padding: const EdgeInsets.all(8.0))` untuk setiap field
+
+**SingleChildScrollView**
+- Memungkinkan form di-scroll saat konten panjang atau keyboard muncul
+- Mencegah overflow error pada layar kecil
+- Implementasi: Membungkus seluruh Form di [productlist_form.dart](lib/screens/productlist_form.dart)
+
+**ListView** (di Drawer)
+- Menampilkan menu items secara vertikal dengan scrolling otomatis
+- Efisien untuk daftar yang bisa bertambah panjang
+
+Contoh di form:
+```dart
+SingleChildScrollView(
+  child: Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TextFormField(...), // Product Name
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TextFormField(...), // Price
+      ),
+      // dst...
+    ],
+  ),
+)
