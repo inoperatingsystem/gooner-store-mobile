@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:gooner_store/screens/menu.dart';
+import 'package:gooner_store/screens/product_entry_list.dart';
 import 'package:gooner_store/screens/productlist_form.dart';
+import 'package:gooner_store/widgets/product_entry_card.dart';
+import 'package:gooner_store/screens/login.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:gooner_store/screens/my_product_entry_list.dart';
 
 class ItemCard extends StatelessWidget {
   // Menampilkan kartu dengan ikon dan nama.
@@ -11,6 +17,7 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Material(
       // Menentukan warna latar belakang dari tema aplikasi.
       color: item.color ?? Theme.of(context).colorScheme.secondary,
@@ -19,7 +26,7 @@ class ItemCard extends StatelessWidget {
 
       child: InkWell(
         // Aksi ketika kartu ditekan.
-        onTap: () {
+        onTap: () async {
           // Menampilkan pesan SnackBar saat kartu ditekan.
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -35,6 +42,48 @@ class ItemCard extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (context) => ProductFormPage()),
             );
+          } else if (item.name == "All Products") {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ProductEntryListPage()
+                  ),
+              );
+          } else if (item.name == "My Products") {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MyProductEntryListPage()
+                  ),
+              );
+            
+          } 
+          else if (item.name == "Logout") {
+              // TODO: Replace the URL with your app's URL and don't forget to add a trailing slash (/)!
+              // To connect Android emulator with Django on localhost, use URL http://10.0.2.2/
+              // If you using chrome,  use URL http://localhost:8000
+              
+              final response = await request.logout(
+                  "http://localhost:8000/auth/logout/");
+              String message = response["message"];
+              if (context.mounted) {
+                  if (response['status']) {
+                      String uname = response["username"];
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("$message See you again, $uname."),
+                      ));
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                      );
+                  } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(message),
+                          ),
+                      );
+                  }
+              }
           }
         },
         // Container untuk menyimpan Icon dan Text

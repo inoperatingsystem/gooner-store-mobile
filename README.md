@@ -4,6 +4,7 @@ Aplikasi mobile simpel terinspirasi dari tim sepak bola Arsenal FC yang dibuat u
 ## Daftar Isi
 - [Tugas 7](#tugas-7)
 - [Tugas 8](#tugas-8)
+- [Tugas 9](#tugas-9)
 
 ## Tugas 7
 
@@ -133,3 +134,62 @@ SingleChildScrollView(
     ],
   ),
 )
+```
+
+## Tugas 9
+
+### 1) Kenapa perlu model Dart untuk JSON?
+Model (class) memberi:
+- Type safety & null-safety: salah tipe ketahuan saat compile, bukan runtime.
+- Struktur jelas: nama field konsisten, mudah refactor.
+- Validasi & konversi terpusat: fromJson/toJson di satu tempat.
+- Auto-complete IDE: mengurangi typo.
+Tanpa model dan hanya Map<String, dynamic>:
+- Raw string key rentan typo (misal 'usernme').
+- Field nullable/tidak jelas → potensi runtime crash.
+- Sulit maintain saat field bertambah/diubah.
+- Logika parsing tersebar di banyak file.
+
+### 2) Perbedaan http vs CookieRequest
+- http: Paket dasar untuk GET/POST; tidak otomatis simpan cookie/session; perlu kelola header manual.
+- CookieRequest: Wrapper yang menyimpan cookie Django (session + csrftoken), menyediakan login/logout, postJson, menjaga state autentik.
+Dalam tugas ini: http cocok untuk request stateless umum; CookieRequest dipakai untuk semua endpoint yang butuh session (login, fetch produk user, tambah produk).
+
+### 3) Kenapa instance CookieRequest dibagikan?
+Agar:
+- Cookie session sama di seluruh layar (tetap login).
+- Tidak perlu passing objek lewat constructor.
+- Menghindari pembuatan instance baru yang kehilangan cookie.
+Provider menjadikan akses request.read/watch mudah dan reaktif.
+
+### 4) Konfigurasi konektivitas Flutter ↔ Django
+Diperlukan:
+- 10.0.2.2 di ALLOWED_HOSTS: Android emulator meneruskan ke localhost host machine. Tanpa ini Django kirim 400 Bad Request (Invalid host).
+- CORS diaktifkan: Izinkan origin aplikasi mengakses resource. Tanpa CORS dapat blok (CORS policy).
+- SameSite & cookie settings (misal SESSION_COOKIE_SAMESITE=None + CSRF): Agar cookie terkirim dan tersimpan; salah konfigurasi → login tampak berhasil tapi request berikut tidak autentik.
+- Izin INTERNET di AndroidManifest: Tanpa izin, network gagal diam-diam (no data).
+Jika salah: gagal login, JSON tidak terbaca, FormatException (HTML dikirim), atau selalu diarahkan ke halaman login.
+
+### 5) Alur pengiriman dan penampilan data
+Form → user isi → validasi Flutter (FormState) → susun map → jsonEncode → request.postJson kirim ke endpoint → Django view parse & simpan model → Django kirim JsonResponse (status + data) → CookieRequest terima & decode → setState/update FutureBuilder → UI rebuild menampilkan produk.
+
+### 6) Mekanisme autentikasi (register, login, logout)
+- Register: Flutter kirim username/password → Django cek validasi (unik, konfirmasi) → buat User → kirim JSON sukses → Flutter tampilkan snackbar / redirect.
+- Login: Flutter kirim cred → Django authenticate + create session + kirim cookie → CookieRequest simpan cookie → navigate ke Home.
+- Akses terproteksi: Request berikut kirim cookie → Django kenali user → balas data.
+- Logout: Flutter panggil endpoint → Django hapus session → CookieRequest kosongkan cookie → navigate ke Login tanpa tombol back (cleared stack).
+
+### 7) Implementasi checklist (step-by-step)
+1. Buat Django app + model Product + migrate.
+2. Tambah view JSON daftar produk + view tambah produk (POST) → uji di browser/Postman.
+3. Atur settings: ALLOWED_HOSTS (localhost, 10.0.2.2), CORS_ALLOWED_ORIGINS, SESSION_COOKIE_SAMESITE, CSRF.
+4. Tambah endpoint auth (register, login, logout) yang return JsonResponse.
+5. Di Flutter: pasang pbp_django_auth + provider CookieRequest di MyApp.
+6. Buat model Dart ProductEntry (fromJson/toJson).
+7. Implement login & register form → uji respons (print saat debug).
+8. Bangun halaman daftar produk (FutureBuilder fetch dengan request.get).
+9. Bangun form tambah produk (validasi, kirim postJson).
+10. Tambah Logout di Drawer & Home (pushAndRemoveUntil + remove back).
+11. Tes di emulator (pakai http://10.0.2.2:8000) & di browser (http://localhost:8000).
+12. Tangani error FormatException → cek body respon HTML vs JSON → perbaiki endpoint.
+13. Final: rapikan tema merah untuk identitas, pastikan navigasi konsisten.
